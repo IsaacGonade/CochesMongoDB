@@ -4,9 +4,7 @@ import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.TableView;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import org.example.coches_isaac_gonzalez.DAO.CocheDAO;
 import org.example.coches_isaac_gonzalez.domain.Coche;
@@ -15,6 +13,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Optional;
 import java.util.ResourceBundle;
 
 public class CochesController implements Initializable {
@@ -54,17 +53,93 @@ public class CochesController implements Initializable {
 
     @FXML
     void onEliminar(ActionEvent event) {
+        Coche coche = tablaCoches.getSelectionModel().getSelectedItem();
+        if (coche == null){
+            Alerts.mostrarError("No se ha seleccionado ningun coche");
+            return;
+        }
 
+        try {
+            //alerta para confirmar la accion
+            Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION);
+            confirmacion.setTitle("¿Eliminar producto?");
+            confirmacion.setContentText("¿Estás seguro?");
+            Optional<ButtonType> respuesta = confirmacion.showAndWait();
+            if (respuesta.get().getButtonData() == ButtonBar.ButtonData.CANCEL_CLOSE){
+                return;
+            }
+
+
+            cocheDAO.eliminarCoche(coche);
+
+            cargarDatos();
+        } catch (Exception e){
+            System.out.println(e.getMessage());
+        }
     }
 
     @FXML
     void onInsertar(ActionEvent event) {
+        String matricula = matriculaTF.getText();
 
+        if (matricula.isEmpty()) {
+            Alerts.mostrarError("La marca es un campo obligatorio");
+            return;
+        }
+
+        String marca = marcaTF.getText();
+        String modelo = modeloTF.getText();
+        String tipo = cbTipo.getSelectionModel().getSelectedItem();
+        Coche coche = new Coche(matricula, marca, modelo, tipo);
+
+        try {
+            //alerta para confirmar la accion
+            Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION);
+            confirmacion.setTitle("¿Añadir producto?");
+            confirmacion.setContentText("¿Estás seguro?");
+            Optional<ButtonType> respuesta = confirmacion.showAndWait();
+            if (respuesta.get().getButtonData() == ButtonBar.ButtonData.CANCEL_CLOSE){
+                return;
+            }
+
+            cocheDAO.insertarCoche(coche);
+
+            cargarDatos();
+        } catch (Exception e){
+            System.out.println(e.getMessage());
+        }
     }
 
     @FXML
     void onModificar(ActionEvent event) {
+        String matricula = matriculaTF.getText();
 
+        if (matricula.isEmpty()) {
+            Alerts.mostrarError("La marca es un campo obligatorio");
+            return;
+        }
+
+        String marca = marcaTF.getText();
+        String modelo = modeloTF.getText();
+        String tipo = cbTipo.getSelectionModel().getSelectedItem();
+        Coche coche = new Coche(matricula, marca, modelo, tipo);
+
+        try {
+            //alerta para confirmar la accion
+            Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION);
+            confirmacion.setTitle("¿Añadir producto?");
+            confirmacion.setContentText("¿Estás seguro?");
+            Optional<ButtonType> respuesta = confirmacion.showAndWait();
+            if (respuesta.get().getButtonData() == ButtonBar.ButtonData.CANCEL_CLOSE){
+                return;
+            }
+
+            cocheDAO.modificarCoche(cocheseleccionado, coche);
+
+            cargarDatos();
+        } catch (Exception e){
+            System.out.println(e.getMessage());
+        }
     }
 
 
@@ -94,7 +169,12 @@ public class CochesController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        ConexionBBDD.conectar();
+        try {
+            ConexionBBDD.conectar();
+        } catch (Exception ioe) {
+            Alerts.mostrarError("Error al cargar la base de datos");
+        }
+
         cargarDatos();
     }
 }

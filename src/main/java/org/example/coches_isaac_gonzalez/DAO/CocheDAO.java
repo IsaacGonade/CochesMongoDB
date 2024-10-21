@@ -76,6 +76,17 @@ public class CocheDAO {
                     .append("tipo", "Familiar");*/
     }
 
+
+    public void modificarCoche(Coche cocheAntiguo, Coche cocheNuevo){
+
+    }
+
+
+    public void eliminarCoche(Coche coche){
+
+    }
+
+
     public List<Coche> obtenerCoche(){
             con = ConexionBBDD.conectar();
             MongoDatabase database = con.getDatabase("Coches");
