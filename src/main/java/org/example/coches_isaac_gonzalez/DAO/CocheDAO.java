@@ -3,6 +3,7 @@ package org.example.coches_isaac_gonzalez.DAO;
 import com.mongodb.MongoClient;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import org.example.coches_isaac_gonzalez.domain.Coche;
 import org.example.coches_isaac_gonzalez.util.ConexionBBDD;
@@ -18,42 +19,45 @@ import java.util.List;
 public class CocheDAO {
 
     MongoClient con;
-
     Coche coche = new Coche();
-
-    MongoCollection<Document> collection=null;
 
     public void insertarCoche(Coche coche){
         try{
             con = ConexionBBDD.conectar();
             MongoDatabase database = con.getDatabase("Coches");
-            database.createCollection("Coches");
-            database.getCollection("Coches");
+            MongoCollection collection = database.getCollection("Coches");
+
+            Document doc = new Document("matricula", coche.getMatricula())
+                    .append("marca", coche.getMarca())
+                    .append("modelo", coche.getModelo())
+                    .append("tipo", coche.getTipo());
+
+            collection.insertOne(doc);
         } catch (Exception e){
             System.out.println(e.getMessage());
         }
 
-        //Document documento = new Document()
-//                    .append("titulo", libro.getTitulo())
-//                    .append("descripcion", libro.getDescripcion())
-//                    .append("autor", libro.getAutor())
-//                    .append("fecha", libro.getFecha())
-//                    .append("disponible", libro.getDisponible()));
-//            db.getCollection("libros").insertOne(documento);
+        /*Document documento = new Document()
+                    .append("titulo", libro.getTitulo())
+                    .append("descripcion", libro.getDescripcion())
+                    .append("autor", libro.getAutor())
+                    .append("fecha", libro.getFecha())
+                    .append("disponible", libro.getDisponible()));
+            db.getCollection("libros").insertOne(documento);
 
 
-            /*Gson gson = new Gson();
+            *//*Gson gson = new Gson();
             String json = gson.toJson(coche);
 
             Document doc = Document.parse(json);
-            collection.insertOne(doc);*/
+            collection.insertOne(doc);*//*
 
 
-            /*Document hondaCivic = new Document();
+            *//*Document hondaCivic = new Document();
             Document renaultMegane = new Document();
-            Document citroenC4 = new Document();*/
+            Document citroenC4 = new Document();*//*
 
-            /*hondaCivic.append("_id", 1)
+            *//*hondaCivic.append("_id", 1)
                     .append("matrcula", "4852KHL")
                     .append("marca", "Honda")
                     .append("modelo", "Honda Civic")
@@ -73,31 +77,41 @@ public class CocheDAO {
     }
 
     public List<Coche> obtenerCoche(){
-        try {
             con = ConexionBBDD.conectar();
             MongoDatabase database = con.getDatabase("Coches");
-//        database.createCollection("Coches");
-            collection = database.getCollection("Coches");
-        } catch (Exception e){
-            System.err.println(e.getClass().getName() + ": " + e.getMessage());
-        }
-        Document documento = new Document();
-        FindIterable findIterable = database.getCollection("libros")
-                .find(documento)
-                .limit(10);
+            MongoCollection collection = database.getCollection("Coches");
+            MongoCursor<Document> cursor = collection.find().iterator();
+            List<Coche> coches = new ArrayList<>();
 
-        List<Coche> coches = new ArrayList<Coche>();
-        Coche coche = null;
-        Iterator<Document> iter = findIterable.iterator();
-        while (iter.hasNext()) {
-            documento = iter.next();
-            coche = new Coche();
-            coche.setMatricula(documento.getString("matricula"));
-            coche.setMarca(documento.getString("marca"));
-            coche.setModelo(documento.getString("modelo"));
-            coche.setTipo(documento.getString("tipo"));
-            coches.add(coche);
-        }
+
+            for(int i = 0; i < collection.count(); i++){
+                int pos = i +1;
+
+                Document doc = cursor.next();
+                String matricula = doc.getString(coche.getMatricula());
+                String marca = doc.getString(coche.getMarca());
+                String modelo = doc.getString(coche.getModelo());
+                String tipo = doc.getString(coche.getTipo());
+
+                coches.add(new Coche(matricula, marca, modelo, tipo));
+            }
+            /*Document documento = new Document();
+            FindIterable findIterable = database.getCollection("libros")
+                    .find(documento)
+                    .limit(10);
+
+            List<Coche> coches = new ArrayList<Coche>();
+            Coche coche = null;
+            Iterator<Document> iter = findIterable.iterator();
+            while (iter.hasNext()) {
+                documento = iter.next();
+                coche = new Coche();
+                coche.setMatricula(documento.getString("matricula"));
+                coche.setMarca(documento.getString("marca"));
+                coche.setModelo(documento.getString("modelo"));
+                coche.setTipo(documento.getString("tipo"));
+                coches.add(coche);
+            }*/
         return coches;
     }
 }
