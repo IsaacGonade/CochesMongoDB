@@ -1,7 +1,6 @@
 package org.example.coches_isaac_gonzalez.DAO;
 
 import com.mongodb.MongoClient;
-import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
@@ -12,117 +11,79 @@ import com.google.gson.Gson;
 import org.bson.Document;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 
 public class CocheDAO {
-
+    //llamo a la conexion
     MongoClient con;
-    Coche coche = new Coche();
 
+    //metodo para insertar coches
     public void insertarCoche(Coche coche){
         try{
+            //creo la conexion
             con = ConexionBBDD.conectar();
+            // Me conecto a la BD "Coches" si NO existe la crea.
             MongoDatabase database = con.getDatabase("Coches");
+            // Creo la coleccion en la que guardare los documentos
             MongoCollection collection = database.getCollection("Coches");
 
+            //nuevo documento
             Document doc = new Document("matricula", coche.getMatricula())
                     .append("marca", coche.getMarca())
                     .append("modelo", coche.getModelo())
                     .append("tipo", coche.getTipo());
 
+            //inserto 1 documento
             collection.insertOne(doc);
         } catch (Exception e){
             System.out.println(e.getMessage());
         }
-
-        /*Document documento = new Document()
-                    .append("titulo", libro.getTitulo())
-                    .append("descripcion", libro.getDescripcion())
-                    .append("autor", libro.getAutor())
-                    .append("fecha", libro.getFecha())
-                    .append("disponible", libro.getDisponible()));
-            db.getCollection("libros").insertOne(documento);
-
-
-            *//*Gson gson = new Gson();
-            String json = gson.toJson(coche);
-
-            Document doc = Document.parse(json);
-            collection.insertOne(doc);*//*
-
-
-            *//*Document hondaCivic = new Document();
-            Document renaultMegane = new Document();
-            Document citroenC4 = new Document();*//*
-
-            *//*hondaCivic.append("_id", 1)
-                    .append("matrcula", "4852KHL")
-                    .append("marca", "Honda")
-                    .append("modelo", "Honda Civic")
-                    .append("tipo", "Sedan");
-
-            renaultMegane.append("_id", 2)
-                    .append("matrcula", "5769LOP")
-                    .append("marca", "Renault")
-                    .append("modelo", "Renault Megane")
-                    .append("tipo", "Familiar");
-
-            citroenC4.append("_id", 3)
-                    .append("matrcula", "6523HYJ")
-                    .append("marca", "Citroen")
-                    .append("modelo", "Citroen C4")
-                    .append("tipo", "Familiar");*/
     }
 
 
+    //metodo para modificar un coche
     public void modificarCoche(Coche cocheAntiguo, Coche cocheNuevo){
+        con = ConexionBBDD.conectar();
+        MongoDatabase database = con.getDatabase("Coches");
+        MongoCollection collection = database.getCollection("Coches");
 
+        //obtengo la matricula del coche seleccionado y modifico todos los campos
+        collection.replaceOne(new Document("matricula", cocheAntiguo.getMatricula()),
+                new Document()
+                        .append("matricula", cocheNuevo.getMatricula())
+                        .append("marca", cocheNuevo.getMarca())
+                        .append("modelo", cocheNuevo.getModelo())
+                        .append("tipo", cocheNuevo.getTipo()));
     }
 
-
+    //metodo para eliminar el coche
     public void eliminarCoche(Coche coche){
+        con = ConexionBBDD.conectar();
+        MongoDatabase database = con.getDatabase("Coches");
+        MongoCollection collection = database.getCollection("Coches");
 
+        collection.deleteOne(new Document("matricula", coche.getMatricula()));
     }
 
-
+    //metodo para cargar los coches existentes en la base de datos
     public List<Coche> obtenerCoche(){
             con = ConexionBBDD.conectar();
             MongoDatabase database = con.getDatabase("Coches");
             MongoCollection collection = database.getCollection("Coches");
+            //creo un cursor para recorrer la base de datos
             MongoCursor<Document> cursor = collection.find().iterator();
-            List<Coche> coches = new ArrayList<>();
-
-
-            for(int i = 0; i < collection.count(); i++){
-                int pos = i +1;
-
-                Document doc = cursor.next();
-                String matricula = doc.getString(coche.getMatricula());
-                String marca = doc.getString(coche.getMarca());
-                String modelo = doc.getString(coche.getModelo());
-                String tipo = doc.getString(coche.getTipo());
-
-                coches.add(new Coche(matricula, marca, modelo, tipo));
-            }
-            /*Document documento = new Document();
-            FindIterable findIterable = database.getCollection("libros")
-                    .find(documento)
-                    .limit(10);
-
             List<Coche> coches = new ArrayList<Coche>();
-            Coche coche = null;
-            Iterator<Document> iter = findIterable.iterator();
-            while (iter.hasNext()) {
-                documento = iter.next();
-                coche = new Coche();
-                coche.setMatricula(documento.getString("matricula"));
-                coche.setMarca(documento.getString("marca"));
-                coche.setModelo(documento.getString("modelo"));
-                coche.setTipo(documento.getString("tipo"));
-                coches.add(coche);
-            }*/
-        return coches;
+            Gson gson = new Gson();
+            try{
+                while (cursor.hasNext()) {
+                    Coche coche = gson.fromJson(cursor.next().toJson(), Coche.class);
+                    coches.add(coche);
+                }
+            } finally {
+                cursor.close();
+            }
+
+            return coches;
     }
 }

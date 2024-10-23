@@ -5,13 +5,12 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.MouseEvent;
 import org.example.coches_isaac_gonzalez.DAO.CocheDAO;
 import org.example.coches_isaac_gonzalez.domain.Coche;
 
-import java.io.IOException;
 import java.net.URL;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -31,6 +30,18 @@ public class CochesController implements Initializable {
     private TextField modeloTF;
 
     @FXML
+    private TableColumn<Coche, String> clTipo;
+
+    @FXML
+    private TableColumn<Coche, String> colMarca;
+
+    @FXML
+    private TableColumn<Coche, String> colMatricula;
+
+    @FXML
+    private TableColumn<Coche, String> colModelo;
+
+    @FXML
     private TableView<Coche> tablaCoches;
 
     private final CocheDAO cocheDAO = new CocheDAO();
@@ -40,9 +51,16 @@ public class CochesController implements Initializable {
         //limpia los campos
         tablaCoches.getItems().clear();
         try {
-            //cargo los datos en la lista
+            //cargo los datos en la tabla
             List<Coche> coches = cocheDAO.obtenerCoche();
             tablaCoches.setItems(FXCollections.observableList(coches));
+
+            //cargamos los datos en las columnas
+            colMatricula.setCellValueFactory(new PropertyValueFactory<>("matricula"));
+            colMarca.setCellValueFactory(new PropertyValueFactory<>("marca"));
+            colModelo.setCellValueFactory(new PropertyValueFactory<>("modelo"));
+            clTipo.setCellValueFactory(new PropertyValueFactory<>("tipo"));
+
             //relleno el combobox
             String[] tipos = new String[]{"Familiar","SUV","Compacto","Deportivo"};
             cbTipo.setItems(FXCollections.observableArrayList(tipos));
@@ -69,9 +87,10 @@ public class CochesController implements Initializable {
                 return;
             }
 
-
+            //llamo al metodo
             cocheDAO.eliminarCoche(coche);
 
+            //cargo los datos para refrescar la tabla
             cargarDatos();
         } catch (Exception e){
             System.out.println(e.getMessage());
@@ -82,11 +101,16 @@ public class CochesController implements Initializable {
     void onInsertar(ActionEvent event) {
         String matricula = matriculaTF.getText();
 
+        //valido que el campo de la matricula no este vacio y que cumpla con los requisitos
         if (matricula.isEmpty()) {
             Alerts.mostrarError("La marca es un campo obligatorio");
             return;
+        }else if (!Validar.comprobarMatricula(matriculaTF.getText())){
+            Alerts.mostrarError("La matricula no cumple los requisitos");
+            return;
         }
 
+        //recojo los datos de los campos de texto y los guardoe en un nuevo objeto
         String marca = marcaTF.getText();
         String modelo = modeloTF.getText();
         String tipo = cbTipo.getSelectionModel().getSelectedItem();
@@ -115,7 +139,10 @@ public class CochesController implements Initializable {
         String matricula = matriculaTF.getText();
 
         if (matricula.isEmpty()) {
-            Alerts.mostrarError("La marca es un campo obligatorio");
+            Alerts.mostrarError("La matricula es un campo obligatorio");
+            return;
+        }else if (!Validar.comprobarMatricula(matriculaTF.getText())){
+            Alerts.mostrarError("La matricula no cumple los requisitos");
             return;
         }
 
@@ -143,7 +170,7 @@ public class CochesController implements Initializable {
     }
 
 
-    //metodo para meter los datos de un producto
+    //metodo para meter los datos de un coche
     private void cargarCoche(Coche coche) {
         marcaTF.setText(coche.getMarca());
         matriculaTF.setText(coche.getMatricula());
@@ -152,12 +179,14 @@ public class CochesController implements Initializable {
     }
 
 
+    //metodo para seleccionar un coche desde la tabla
     @FXML
     void seleccionarCoche(MouseEvent event) {
         cocheseleccionado = tablaCoches.getSelectionModel().getSelectedItem();
         cargarCoche(cocheseleccionado);
     }
 
+    //metodo para limpiar todos los campos
     @FXML
     void onLimpiar(ActionEvent event) {
         marcaTF.setText("");
@@ -167,6 +196,7 @@ public class CochesController implements Initializable {
         matriculaTF.requestFocus();
     }
 
+    //metodo que conecta con la base de datos y carga los datos desde el inicio
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         try {
@@ -174,7 +204,6 @@ public class CochesController implements Initializable {
         } catch (Exception ioe) {
             Alerts.mostrarError("Error al cargar la base de datos");
         }
-
         cargarDatos();
     }
 }
